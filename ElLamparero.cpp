@@ -8,12 +8,12 @@ using namespace std;
 //Joaquin Poblete
 
 //int tamTab=12, tamLamp=5;
-void actualizarLamparero(char lamp[5][5], char tablero[12][12], int filaJ, int colJ) {
+void actualizarLamparero(char lamp[][5], char tablero[][12], int pos1, int pos2) {
     int i, j;
     for (i = 0; i < 5; i++) {
         for (j = 0; j < 5; j++) {
-            int filaT = filaJ - 2 + i;
-            int colT = colJ - 2 + j;
+            int filaT = pos1 - 2 + i;
+            int colT = pos2 - 2 + j;
 
             if (filaT >= 0 && filaT < 12 && colT >= 0 && colT < 12) {
                 lamp[i][j] = tablero[filaT][colT];
@@ -92,7 +92,7 @@ void imprimirTablero(char mat[][12]){
     }
 }
 
-void imprimirLamparero(char lamp[5][5]) {
+void imprimirLamparero(char lamp[][5]) {
     int pos1, pos2;
     for (pos1= 0; pos1 < 5; pos1++) {
         for (pos2 = 0; pos2 < 5; pos2++) {
@@ -102,12 +102,29 @@ void imprimirLamparero(char lamp[5][5]) {
     }
 }
         
+void EncenderLampara(char lampara[][3], char tablero[][12], int pos1, int pos2) {
+    for (int i = -1; i <= 1; i++) {
+        for (int j = -1; j <= 1; j++) {
+            int fila = pos1 + i;
+            int col = pos2 + j;
+
+            if (fila >= 0 && fila < 12 && col >= 0 && col < 12) {
+                lampara[i + 1][j + 1] = tablero[fila][col];
+            } else {
+                lampara[i + 1][j + 1] = ' '; // fuera de tablero = vacío
+            }
+        }
+    }
+    tablero[pos1][pos2] = 'Y';
+}
+
 int main(){
     srand(time(NULL));
-    char Lamp[5][5],tablero[12][12],mov;
+    char Lamp[5][5],tablero[12][12],lampara[3][3],mov;
     int pos1,pos2,pos1A=6,pos2A=6,pos1AF,pos2AF;
-    int obstI=40,ObstR=20;
+    int ObsDest=0;;
     int lampsA=9,cantlampsE=0;
+    bool puedeMover = true;
 
     pos1A=rand()%12;
     pos2A=rand()%12;
@@ -122,9 +139,10 @@ int main(){
     
         printf("\nMover con WASD: ");
         scanf(" %c", &mov); 
-
+        
         pos1AF = pos1A;
         pos2AF = pos2A;
+        puedeMover=true;//para las vueltas donde obstaculos rompibles>=5
         switch(mov){
             case 'a': case 'A':pos2AF--;break;
             case 'w': case 'W': pos1AF--;break;
@@ -135,20 +153,54 @@ int main(){
             break;
         }
 
-        // Verificar que se puede mover dentro del tablero
+           // Verificar que se puede mover dentro del tablero
         if (pos1AF >= 0 && pos1AF < 12 && pos2AF >= 0 && pos2AF < 12) {
             // Verificar que no sea un obstáculo irrompible
             if (tablero[pos1AF][pos2AF] != 'O') {
-                tablero[pos1A][pos2A] = ' ';           // Borrar posición anterior
-                tablero[pos1AF][pos2AF] = '*';         // Nueva posición
-                pos1A = pos1AF;                         // Actualizar posición actual
-                pos2A = pos2AF;
-            } else {
-                printf("¡Obstáculo irrompible!\n");
-            }
-        } else {
+                // Movimiento sobre casilla con lámpara apagada
+                if (tablero[pos1AF][pos2AF] == 'i') {
+                    EncenderLampara(lampara, tablero, pos1AF, pos2AF);
+                }
+
+                // Movimiento sobre obstáculo rompible 
+                if (tablero[pos1AF][pos2AF] == '/') {
+                    if (ObsDest < 5) {
+                        ObsDest++;
+                        tablero[pos1AF][pos2AF] = ' '; // romper el obstáculo
+                        if (ObsDest == 5) {
+                            printf("OJITO, ya no puedes atravesar más obstáculos rompibles\n");
+                        }
+                    } else {
+                        printf("¡Ya no puedes romper más obstáculos rompibles!\n");
+                        puedeMover = false;
+                    }
+                }
+
+                if (puedeMover) {
+                    // Restaurar lo que había debajo del jugador anterior
+                    if (tablero[pos1A][pos2A] == '*') {
+                        if (lampara[1][1] == 'Y') {
+                            tablero[pos1A][pos2A] = 'Y';
+                        } else {
+                            tablero[pos1A][pos2A] = ' ';
+                        }
+                    }
+
+                    // Mover al jugador
+                    if (tablero[pos1AF][pos2AF] != 'Y') {
+                        tablero[pos1AF][pos2AF] = '*';
+                    }
+
+                    pos1A = pos1AF;
+                    pos2A = pos2AF;
+                }
+
+            } else 
+                printf("¡Hay un obstáculo irrompible!\n");
+            
+        } else 
             printf("¡Movimiento fuera del tablero!\n");
-        }
+        
 
         actualizarLamparero(Lamp, tablero, pos1A, pos2A);
         imprimirTablero(tablero);
