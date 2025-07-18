@@ -1,0 +1,1 @@
+El juego del lamparero es un programa en C que simula un tablero de 12x12 donde el jugador solo puede ver un área de 5x5 a su alrededor. El objetivo es encender lámparas estratégicamente, las cuales iluminan un área de 3x3, para poder visualizar partes del tablero y avanzar. Incluye lógica de movimiento, validaciones de visibilidad e interacción por consola.
